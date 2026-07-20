@@ -8,7 +8,10 @@ import TheWelcome from './components/TheWelcome.vue'
     <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
 
     <div class="wrapper">
-      <HelloWorld msg="You did it!" />
+      <HelloWorld msg="HealthTracker" />
+      <p class="app-description">
+        Track and manage your personal health data all in one place.
+      </p>
     </div>
   </header>
 
@@ -25,6 +28,12 @@ header {
 .logo {
   display: block;
   margin: 0 auto 2rem;
+}
+
+.app-description {
+  text-align: center;
+  color: var(--color-text);
+  opacity: 0.8;
 }
 
 @media (min-width: 1024px) {
