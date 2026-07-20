@@ -1,0 +1,4 @@
+StockyApp/node_modules/
+StockyApp/dist/
+*.log
+package-lock.json
