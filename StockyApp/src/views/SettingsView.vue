@@ -4,6 +4,8 @@ import { useRouter } from 'vue-router'
 import BaseInput from '@/components/common/BaseInput.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import CalorieGoalForm from '@/components/goal/CalorieGoalForm.vue'
+import WeightEntryForm from '@/components/weight/WeightEntryForm.vue'
+import WeightHistoryList from '@/components/weight/WeightHistoryList.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useWeightStore } from '@/stores/weight'
 import { lbToKg } from '@/utils/units'
@@ -18,6 +20,7 @@ const saving = ref(false)
 const saved = ref(false)
 const showRecalculate = ref(false)
 const recalculating = ref(false)
+const loggingWeight = ref(false)
 
 onMounted(() => weightStore.subscribe())
 onUnmounted(() => weightStore.unsubscribeAll())
@@ -77,6 +80,19 @@ async function handleRecalculate(payload) {
 async function handleLogOut() {
   await authStore.logOut()
   router.replace({ name: 'login' })
+}
+
+async function addWeightEntry({ date, weight }) {
+  loggingWeight.value = true
+  try {
+    await weightStore.addWeightEntry({ date, weight, unit: unit.value })
+  } finally {
+    loggingWeight.value = false
+  }
+}
+
+function deleteWeightEntry(entryId) {
+  weightStore.deleteWeightEntry(entryId)
 }
 </script>
 
@@ -138,6 +154,12 @@ async function handleLogOut() {
           kg
         </button>
       </div>
+    </section>
+
+    <section class="settings-view__section">
+      <p class="settings-view__label">Weight</p>
+      <WeightEntryForm :unit="unit" :saving="loggingWeight" @submit="addWeightEntry" />
+      <WeightHistoryList :entries="weightStore.sortedEntries" @delete="deleteWeightEntry" />
     </section>
 
     <BaseButton variant="ghost" full-width @click="handleLogOut">Log out</BaseButton>

@@ -1,30 +1,23 @@
 <script setup>
-import { ref } from 'vue'
-import BaseModal from '@/components/common/BaseModal.vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import BaseInput from '@/components/common/BaseInput.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import FoodSearchList from '@/components/food/FoodSearchList.vue'
 import { useFoodItemsStore } from '@/stores/foodItems'
-import { useLogStore } from '@/stores/log'
+import { useLogStore, MEAL_TYPES } from '@/stores/log'
+import { todayIso } from '@/utils/date'
 
-const props = defineProps({
-  mealType: {
-    type: String,
-    required: true,
-  },
-  date: {
-    type: String,
-    required: true,
-  },
-})
-
-const emit = defineEmits(['close', 'logged'])
-
+const router = useRouter()
 const foodItemsStore = useFoodItemsStore()
 const logStore = useLogStore()
 
-const step = ref('search') // 'search' | 'create' | 'quantity'
+onMounted(() => foodItemsStore.subscribe())
+onUnmounted(() => foodItemsStore.unsubscribeAll())
+
+const step = ref('search') // 'search' | 'create' | 'details'
 const selectedItem = ref(null)
+const mealType = ref(null)
 const quantity = ref(1)
 const saving = ref(false)
 const error = ref('')
@@ -35,16 +28,28 @@ const newItemServingSize = ref('')
 
 const searchListRef = ref(null)
 
+function goBack() {
+  if (step.value === 'search') {
+    router.back()
+  } else if (step.value === 'create') {
+    step.value = 'search'
+  } else {
+    step.value = 'search'
+  }
+}
+
 function chooseItem(item) {
   selectedItem.value = item
+  mealType.value = null
   quantity.value = 1
-  step.value = 'quantity'
+  step.value = 'details'
 }
 
 function openCreateForm() {
   newItemName.value = searchListRef.value?.searchTerm ?? ''
   newItemCalories.value = ''
   newItemServingSize.value = ''
+  error.value = ''
   step.value = 'create'
 }
 
@@ -62,14 +67,12 @@ async function createItem() {
       calories,
       servingSize: newItemServingSize.value.trim(),
     })
-    selectedItem.value = {
+    chooseItem({
       id,
       name: newItemName.value.trim(),
       calories,
       servingSize: newItemServingSize.value.trim(),
-    }
-    quantity.value = 1
-    step.value = 'quantity'
+    })
   } catch (err) {
     error.value = err.message
   } finally {
@@ -79,6 +82,10 @@ async function createItem() {
 
 async function logEntry() {
   error.value = ''
+  if (!mealType.value) {
+    error.value = 'Choose a meal.'
+    return
+  }
   const qty = Number(quantity.value)
   if (!qty || qty <= 0) {
     error.value = 'Enter a quantity greater than 0.'
@@ -87,12 +94,12 @@ async function logEntry() {
   saving.value = true
   try {
     await logStore.addLogEntry({
-      date: props.date,
-      mealType: props.mealType,
+      date: todayIso(),
+      mealType: mealType.value,
       item: selectedItem.value,
       quantity: qty,
     })
-    emit('logged')
+    router.push({ name: 'today' })
   } catch (err) {
     error.value = err.message
   } finally {
@@ -102,15 +109,20 @@ async function logEntry() {
 </script>
 
 <template>
-  <BaseModal title="Add food" @close="$emit('close')">
-    <div v-if="step === 'search'" class="add-food-modal__step">
+  <div class="log-food-view">
+    <header class="log-food-view__header">
+      <button class="log-food-view__back" type="button" @click="goBack">← Back</button>
+      <h1 class="log-food-view__title">Log Food</h1>
+    </header>
+
+    <div v-if="step === 'search'" class="log-food-view__step">
       <FoodSearchList ref="searchListRef" @select="chooseItem" />
       <BaseButton variant="secondary" full-width @click="openCreateForm">
         + Create new food item
       </BaseButton>
     </div>
 
-    <form v-else-if="step === 'create'" class="add-food-modal__step" @submit.prevent="createItem">
+    <form v-else-if="step === 'create'" class="log-food-view__step" @submit.prevent="createItem">
       <BaseInput v-model="newItemName" label="Name" placeholder="e.g. Grilled chicken" required />
       <BaseInput
         v-model="newItemServingSize"
@@ -126,55 +138,127 @@ async function logEntry() {
         step="1"
         required
       />
-      <p v-if="error" class="add-food-modal__error">{{ error }}</p>
+      <p v-if="error" class="log-food-view__error">{{ error }}</p>
       <BaseButton type="submit" full-width :disabled="saving">
         {{ saving ? 'Saving…' : 'Save item & continue' }}
       </BaseButton>
-      <BaseButton variant="ghost" full-width @click="step = 'search'">Back to search</BaseButton>
     </form>
 
-    <form v-else class="add-food-modal__step" @submit.prevent="logEntry">
-      <div class="add-food-modal__summary">
-        <p class="add-food-modal__summary-name">{{ selectedItem.name }}</p>
-        <p class="add-food-modal__summary-meta">
+    <form v-else class="log-food-view__step" @submit.prevent="logEntry">
+      <div class="log-food-view__summary">
+        <p class="log-food-view__summary-name">{{ selectedItem.name }}</p>
+        <p class="log-food-view__summary-meta">
           {{ selectedItem.servingSize }} · {{ selectedItem.calories }} cal
         </p>
       </div>
+
+      <div class="log-food-view__field">
+        <span class="log-food-view__label">Meal</span>
+        <div class="log-food-view__meal-options">
+          <button
+            v-for="meal in MEAL_TYPES"
+            :key="meal"
+            type="button"
+            class="log-food-view__meal-option"
+            :class="{ 'log-food-view__meal-option--active': mealType === meal }"
+            @click="mealType = meal"
+          >
+            {{ meal.charAt(0).toUpperCase() + meal.slice(1) }}
+          </button>
+        </div>
+      </div>
+
       <BaseInput v-model="quantity" label="Quantity" type="number" min="0" step="0.25" required />
-      <p v-if="error" class="add-food-modal__error">{{ error }}</p>
+      <p v-if="error" class="log-food-view__error">{{ error }}</p>
       <BaseButton type="submit" full-width :disabled="saving">
         {{ saving ? 'Adding…' : 'Add to log' }}
       </BaseButton>
-      <BaseButton variant="ghost" full-width @click="step = 'search'"
-        >Choose different item</BaseButton
-      >
     </form>
-  </BaseModal>
+  </div>
 </template>
 
 <style scoped>
-.add-food-modal__step {
+.log-food-view {
+  padding: var(--space-md);
+  padding-bottom: calc(var(--nav-height) + var(--space-lg));
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
 }
 
-.add-food-modal__summary {
+.log-food-view__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.log-food-view__back {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.log-food-view__title {
+  font-size: 1.25rem;
+}
+
+.log-food-view__step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.log-food-view__summary {
   padding: var(--space-md);
   background: var(--color-primary-soft);
   border-radius: var(--radius-md);
 }
 
-.add-food-modal__summary-name {
+.log-food-view__summary-name {
   font-weight: 600;
 }
 
-.add-food-modal__summary-meta {
+.log-food-view__summary-meta {
   font-size: 0.875rem;
   color: var(--color-text-muted);
 }
 
-.add-food-modal__error {
+.log-food-view__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.log-food-view__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.log-food-view__meal-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-sm);
+}
+
+.log-food-view__meal-option {
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.log-food-view__meal-option--active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+.log-food-view__error {
   color: var(--color-danger);
   font-size: 0.875rem;
 }

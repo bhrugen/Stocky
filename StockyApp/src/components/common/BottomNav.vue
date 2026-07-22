@@ -3,7 +3,6 @@ const links = [
   { to: { name: 'today' }, label: 'Today', icon: '🍽️' },
   { to: { name: 'history' }, label: 'History', icon: '📅' },
   { to: { name: 'food-library' }, label: 'Foods', icon: '🥗' },
-  { to: { name: 'weight' }, label: 'Weight', icon: '⚖️' },
   { to: { name: 'settings' }, label: 'Settings', icon: '⚙️' },
 ]
 </script>
@@ -21,6 +20,12 @@ const links = [
       <span class="bottom-nav__label">{{ link.label }}</span>
     </RouterLink>
   </nav>
+
+  <RouterLink :to="{ name: 'log-food' }" class="log-food-fab" aria-label="Log food">
+    <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+      <path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" />
+    </svg>
+  </RouterLink>
 </template>
 
 <style scoped>
@@ -56,5 +61,29 @@ const links = [
 
 .bottom-nav__link--active {
   color: var(--color-primary);
+}
+
+.log-food-fab {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--nav-height) + 8px);
+  transform: translateX(-50%);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: var(--color-primary);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.28),
+    0 2px 4px rgba(0, 0, 0, 0.15);
+  z-index: 60;
+  transition: transform 0.15s ease;
+}
+
+.log-food-fab:active {
+  transform: translateX(-50%) scale(0.93);
 }
 </style>

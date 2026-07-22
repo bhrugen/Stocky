@@ -15,8 +15,6 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['add-food'])
-
 const logStore = useLogStore()
 const entries = logStore.entriesForMeal(props.date, props.mealType)
 
@@ -49,10 +47,6 @@ function deleteEntry(entryId) {
       />
     </div>
     <p v-else class="meal-section__empty">No food logged yet.</p>
-
-    <button class="meal-section__add" type="button" @click="$emit('add-food', mealType)">
-      + Add food
-    </button>
   </section>
 </template>
 
@@ -88,17 +82,5 @@ function deleteEntry(entryId) {
   color: var(--color-text-muted);
   font-size: 0.875rem;
   padding: var(--space-sm) 0;
-}
-
-.meal-section__add {
-  margin-top: var(--space-sm);
-  width: 100%;
-  background: none;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: var(--space-sm);
-  color: var(--color-primary);
-  font-weight: 600;
-  cursor: pointer;
 }
 </style>

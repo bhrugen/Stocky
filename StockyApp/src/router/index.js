@@ -32,14 +32,14 @@ const router = createRouter({
       component: () => import('@/views/FoodLibraryView.vue'),
     },
     {
-      path: '/weight',
-      name: 'weight',
-      component: () => import('@/views/WeightView.vue'),
-    },
-    {
       path: '/settings',
       name: 'settings',
       component: () => import('@/views/SettingsView.vue'),
+    },
+    {
+      path: '/log-food',
+      name: 'log-food',
+      component: () => import('@/views/LogFoodView.vue'),
     },
   ],
 })

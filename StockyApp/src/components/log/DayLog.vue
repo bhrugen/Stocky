@@ -1,8 +1,7 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { onMounted, watch } from 'vue'
 import DailySummary from '@/components/log/DailySummary.vue'
 import MealSection from '@/components/log/MealSection.vue'
-import AddFoodModal from '@/components/food/AddFoodModal.vue'
 import { MEAL_TYPES, useLogStore } from '@/stores/log'
 
 const props = defineProps({
@@ -13,7 +12,6 @@ const props = defineProps({
 })
 
 const logStore = useLogStore()
-const activeMealType = ref(null)
 
 function subscribe() {
   logStore.subscribeToDate(props.date)
@@ -21,14 +19,6 @@ function subscribe() {
 
 onMounted(subscribe)
 watch(() => props.date, subscribe)
-
-function openAddFood(mealType) {
-  activeMealType.value = mealType
-}
-
-function closeAddFood() {
-  activeMealType.value = null
-}
 </script>
 
 <template>
@@ -40,15 +30,6 @@ function closeAddFood() {
       :key="mealType"
       :meal-type="mealType"
       :date="date"
-      @add-food="openAddFood"
-    />
-
-    <AddFoodModal
-      v-if="activeMealType"
-      :meal-type="activeMealType"
-      :date="date"
-      @close="closeAddFood"
-      @logged="closeAddFood"
     />
   </div>
 </template>

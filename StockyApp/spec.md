@@ -78,14 +78,14 @@ Notes:
 ### 4.2 Today View (home)
 - Header shows current date (defaults to today; can navigate to other days via History).
 - Daily summary: goal, total consumed, remaining (or over-goal indicator), shown as a progress bar/ring.
-- Four meal sections (Breakfast, Lunch, Dinner, Snacks), each listing that day's logged entries (item name, serving size × quantity, calories) with a per-section subtotal.
-- "Add food" action per section.
+- Four meal sections (Breakfast, Lunch, Dinner, Snacks), each listing that day's logged entries (item name, serving size × quantity, calories) with a per-section subtotal. Meal sections are read/edit only — food is added via the global Log Food action (§4.3), not a per-section button.
 - Tapping an entry allows edit (change quantity) or delete.
 
-### 4.3 Add Food to a Meal
-- Search personal food library by name (typeahead).
-- Select an existing item, enter quantity (default 1), save → creates a `logEntries` doc.
-- Or, create a new food item inline (name, calories, serving size) if it doesn't exist yet, then it's immediately usable and saved to `foodItems` for future reuse.
+### 4.3 Log Food (global action)
+- Reached via the **+** action in the bottom nav (see §5 layout), from anywhere in the app — not scoped to a specific meal section.
+- Step 1 — Search: search the user's own food library by name (live-filtered as you type); Firestore rules and the per-user `foodItems` subcollection mean only that user's own items are ever queryable, never another user's. A "+ Create new food item" action is available if nothing matches.
+- Step 2 — Create (optional): name, serving size, calories per serving; saves to `foodItems` and immediately proceeds to step 3 with the new item selected.
+- Step 3 — Details: pick which meal to log it under (Breakfast/Lunch/Dinner/Snacks) and a quantity multiplier (default 1); logs against **today's date** and returns to Today.
 
 ### 4.4 Manage Food Library
 - Standalone screen listing all personal food items (searchable/sortable by name).
@@ -94,22 +94,19 @@ Notes:
 
 ### 4.5 Settings / Profile
 - View account email.
-- Set/update daily calorie goal.
+- Set/update daily calorie goal directly, or recalculate it from body stats (gender/age/height/activity level + goal-pace slider — same calculator as onboarding, §4.1a).
+- Set weight unit (lb/kg).
+- Weight tracking: add a weight entry (date defaults to today, value in the selected unit) and view weight history as a chronological list — lives here rather than as its own nav tab.
 - Log out.
 
-### 4.6 Weight Tracking
-- Add a weight entry: date (defaults to today), weight value, unit.
-- View weight history as a simple chronological list.
-
-### 4.7 History
+### 4.6 History
 - Calendar or date-list view of past days.
 - Each day shows date + total calories logged (and whether goal was met).
 - Selecting a day opens that day's full meal breakdown (same layout as Today view), editable.
-- Weight history shown as its own list (separate from calorie history, or a toggle/tab on the same screen).
 
 ## 5. Non-Functional Requirements
 
-- Mobile-first: single-column layouts, touch-friendly controls, simple top or bottom navigation (Today / History / Settings).
+- Mobile-first: single-column layouts, touch-friendly controls, fixed full-width bottom nav with 4 tabs (Today / History / Foods / Settings) plus a separate circular floating "Log Food" button (a bold **+** icon) that floats just above the nav bar, centered — the app's one global "add" affordance, visually distinct from the tabs rather than embedded as a 5th one.
 - Firestore security rules: all reads/writes scoped to `users/{uid}` matching the authenticated user's UID; no cross-user access.
 - No offline-sync requirement for v1 (Firestore's default caching is sufficient; explicit offline support is a future enhancement).
 
@@ -163,7 +160,6 @@ src/
     food/                   # food-domain reusable pieces
       FoodItemCard.vue
       FoodSearchList.vue
-      AddFoodModal.vue
     log/
       MealSection.vue
       LogEntryRow.vue
@@ -171,7 +167,7 @@ src/
       DayLog.vue             # shared by Today view and History's day-detail view
     weight/
       WeightEntryForm.vue
-      WeightHistoryList.vue
+      WeightHistoryList.vue   # both used from Settings
     goal/
       CalorieGoalForm.vue    # shared by Onboarding and Settings' "recalculate goal"
   views/                    # one per route, composed from components/
@@ -180,8 +176,8 @@ src/
     TodayView.vue
     HistoryView.vue
     FoodLibraryView.vue
-    SettingsView.vue
-    WeightView.vue
+    LogFoodView.vue          # global "+" action: search/create -> meal + quantity -> log to today
+    SettingsView.vue         # includes goal, weight unit, and weight tracking
 ```
 - `views/` = route-level containers only (fetch/orchestrate data, lay out sections). They should stay thin and delegate rendering to `components/`.
 - `components/common/` = generic, reusable across any domain (buttons, inputs, modals, spinners) — no business logic.
