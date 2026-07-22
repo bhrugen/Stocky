@@ -26,3 +26,12 @@ There is no lint or test script configured yet.
 - `src/components/` holds the default create-vue scaffold components (`HelloWorld.vue`, `TheWelcome.vue`, `WelcomeItem.vue`, `icons/`) — this is starter boilerplate, not app-specific structure yet.
 - No router, state management, or backend integration is present yet — the app is a fresh scaffold with no stock-related features implemented.
 - Formatting is enforced via Prettier (`.prettierrc.json`); no ESLint config is present.
+- Full product spec (flows, Firestore data model, coding standards, component hierarchy) lives in `StockyApp/spec.md` — read it before implementing features.
+
+## Coding standards (see `StockyApp/spec.md` §7 for full detail)
+
+- Use `<script setup>` Composition API for all components; no Options API.
+- One component per file, `PascalCase` filename matching the component name.
+- Extract reusable UI into `src/components/common/` (generic) or `src/components/<domain>/` (feature-specific, e.g. `food/`, `log/`, `weight/`); keep `src/views/` thin — orchestration only, delegate rendering to components.
+- Shared reactive logic goes in composables (`src/composables/useX.js`); shared/cross-component state goes in Pinia stores (`src/stores/`); never call Firestore/Auth directly from a component.
+- Prefer `computed` over methods for derived values; declare `defineProps`/`defineEmits` explicitly; avoid prop drilling beyond 2 levels — use a store/composable instead.

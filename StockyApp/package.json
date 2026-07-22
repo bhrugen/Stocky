@@ -10,7 +10,10 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
-    "vue": "beta"
+    "firebase": "^12.16.0",
+    "pinia": "^4.0.2",
+    "vue": "beta",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.7",

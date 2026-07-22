@@ -105,7 +105,79 @@ Notes:
 - Social features (friends, sharing, feeds).
 - Trend/graph charts (history is list-only).
 
-## 7. Open Questions
+## 7. Coding Standards & Component Hierarchy
+
+### 8.1 Component style
+- Use `<script setup>` SFCs (Composition API) for all new components — no Options API.
+- One component per file; filename matches component name in `PascalCase` (e.g. `MealSection.vue`).
+- Keep components small and single-purpose. If a piece of UI or logic is used in more than one place (or is likely to be), extract it rather than duplicating markup.
+- Prefer composables (`useX.js` in `src/composables/`) for shared reactive logic (e.g. `useAuth.js`, `useFoodLibrary.js`, `useDailyTotals.js`) instead of duplicating logic across components.
+
+### 8.2 Folder structure
+```
+src/
+  main.js
+  App.vue
+  router/
+    index.js
+  stores/                 # Pinia stores
+    auth.js
+    foodItems.js
+    log.js
+  firebase/
+    index.js              # Firebase app init (auth + firestore)
+  composables/
+    useAuth.js
+    useFoodSearch.js
+  components/
+    common/                # generic, app-agnostic reusable UI
+      BaseButton.vue
+      BaseInput.vue
+      ProgressRing.vue
+      LoadingSpinner.vue
+    food/                   # food-domain reusable pieces
+      FoodItemCard.vue
+      FoodSearchList.vue
+      AddFoodModal.vue
+    log/
+      MealSection.vue
+      LogEntryRow.vue
+      DailySummary.vue
+    weight/
+      WeightEntryForm.vue
+      WeightHistoryList.vue
+  views/                    # one per route, composed from components/
+    LoginView.vue
+    TodayView.vue
+    HistoryView.vue
+    FoodLibraryView.vue
+    SettingsView.vue
+    WeightView.vue
+```
+- `views/` = route-level containers only (fetch/orchestrate data, lay out sections). They should stay thin and delegate rendering to `components/`.
+- `components/common/` = generic, reusable across any domain (buttons, inputs, modals, spinners) — no business logic.
+- `components/<domain>/` = reusable pieces tied to one feature area (food, log, weight) but usable across multiple views within that domain.
+- Never put Firestore calls directly in a component — go through a store or composable so components stay presentational/testable.
+
+### 8.3 Props, emits, and state
+- Declare props with `defineProps` using full type + validation (not just a bare type), and `defineEmits` with explicit event names — no implicit `$emit('whatever')` without declaring it.
+- Components should be presentational where possible: receive data via props, emit events up; avoid reaching into global state from deeply nested components when a prop/emit would do.
+- Use Pinia stores for cross-component/shared state (auth user, today's log entries, food library cache). Use local `ref`/`reactive` for state that's only relevant to one component.
+- Avoid prop drilling more than 2 levels — if it happens, that's a signal to use a store or composable instead.
+
+### 8.4 Naming & formatting
+- Components: `PascalCase` filenames and tag usage (`<MealSection />`), multi-word names (avoid single-word components to prevent clashes with HTML elements).
+- Composables: `camelCase` starting with `use` (`useFoodSearch.js`).
+- Pinia stores: `camelCase` file name, `useXStore` export name (e.g. `useAuthStore`).
+- Run `npm run format` (Prettier) before committing; no ESLint is configured yet, so rely on Prettier + these conventions for consistency until lint is added.
+
+### 8.5 General best practices
+- Prefer `computed` over methods for derived values (e.g. daily totals, remaining calories).
+- Keep Firestore document shape decisions (Section 3) centralized in store/composable code, not re-declared ad hoc in components.
+- Handle loading and error states explicitly in any component that triggers an async Firestore/Auth call (no silent failures).
+- Co-locate a component's own trivial helpers in the same file; extract to `src/utils/` only once a helper is shared by 2+ components.
+
+## 8. Open Questions
 
 - Should past-day log entries be freely editable, or should there be a cutoff (e.g. only today + yesterday editable)?
 - Weight units: should the app support both lb and kg with a per-user or per-entry toggle, or fix one unit globally?
