@@ -1,17 +1,41 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseInput from '@/components/common/BaseInput.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
+import CalorieGoalForm from '@/components/goal/CalorieGoalForm.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useWeightStore } from '@/stores/weight'
+import { lbToKg } from '@/utils/units'
 
 const authStore = useAuthStore()
+const weightStore = useWeightStore()
 const router = useRouter()
 
 const goal = ref(authStore.dailyCalorieGoal)
 const unit = ref(authStore.weightUnit)
 const saving = ref(false)
 const saved = ref(false)
+const showRecalculate = ref(false)
+const recalculating = ref(false)
+
+onMounted(() => weightStore.subscribe())
+onUnmounted(() => weightStore.unsubscribeAll())
+
+const latestWeightKg = computed(() => {
+  const latest = weightStore.sortedEntries[0]
+  if (!latest) return null
+  return latest.unit === 'lb' ? lbToKg(latest.weight) : latest.weight
+})
+
+const goalFormInitial = computed(() => ({
+  gender: authStore.profile?.gender,
+  age: authStore.profile?.age,
+  heightCm: authStore.profile?.heightCm,
+  activityLevel: authStore.profile?.activityLevel,
+  weeklyRateLb: authStore.profile?.weeklyRateLb ?? 0,
+  weightKg: latestWeightKg.value,
+}))
 
 watch(
   () => authStore.dailyCalorieGoal,
@@ -40,6 +64,16 @@ async function setUnit(next) {
   await authStore.updateWeightUnit(next)
 }
 
+async function handleRecalculate(payload) {
+  recalculating.value = true
+  try {
+    await authStore.updateBodyProfile(payload)
+    showRecalculate.value = false
+  } finally {
+    recalculating.value = false
+  }
+}
+
 async function handleLogOut() {
   await authStore.logOut()
   router.replace({ name: 'login' })
@@ -65,6 +99,23 @@ async function handleLogOut() {
           {{ saving ? 'Saving…' : 'Save goal' }}
         </BaseButton>
       </form>
+
+      <button
+        type="button"
+        class="settings-view__toggle-link"
+        @click="showRecalculate = !showRecalculate"
+      >
+        {{ showRecalculate ? 'Hide calculator' : 'Recalculate from my body stats' }}
+      </button>
+
+      <CalorieGoalForm
+        v-if="showRecalculate"
+        :weight-unit="unit"
+        :initial="goalFormInitial"
+        submit-label="Update goal"
+        :saving="recalculating"
+        @submit="handleRecalculate"
+      />
     </section>
 
     <section class="settings-view__section">
@@ -135,6 +186,16 @@ async function handleLogOut() {
 .settings-view__success {
   color: var(--color-primary);
   font-size: 0.875rem;
+}
+
+.settings-view__toggle-link {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-align: left;
 }
 
 .settings-view__unit-toggle {

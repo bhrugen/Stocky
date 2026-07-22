@@ -22,6 +22,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!user.value)
   const dailyCalorieGoal = computed(() => profile.value?.dailyCalorieGoal ?? 2000)
   const weightUnit = computed(() => profile.value?.weightUnit ?? 'lb')
+  const onboardingComplete = computed(() => profile.value?.onboardingComplete ?? false)
 
   async function ensureProfile(firebaseUser) {
     const ref = doc(db, 'users', firebaseUser.uid)
@@ -31,6 +32,12 @@ export const useAuthStore = defineStore('auth', () => {
         email: firebaseUser.email,
         dailyCalorieGoal: 2000,
         weightUnit: 'lb',
+        onboardingComplete: false,
+        gender: null,
+        age: null,
+        heightCm: null,
+        activityLevel: null,
+        weeklyRateLb: 0,
         createdAt: serverTimestamp(),
       }
       await setDoc(ref, initial)
@@ -117,6 +124,27 @@ export const useAuthStore = defineStore('auth', () => {
     profile.value = { ...profile.value, weightUnit: unit }
   }
 
+  async function updateBodyProfile({
+    gender,
+    age,
+    heightCm,
+    activityLevel,
+    weeklyRateLb,
+    dailyCalorieGoal,
+  }) {
+    const updates = { gender, age, heightCm, activityLevel, weeklyRateLb, dailyCalorieGoal }
+    const ref = doc(db, 'users', user.value.uid)
+    await setDoc(ref, updates, { merge: true })
+    profile.value = { ...profile.value, ...updates }
+  }
+
+  async function completeOnboarding(bodyProfile) {
+    await updateBodyProfile(bodyProfile)
+    const ref = doc(db, 'users', user.value.uid)
+    await setDoc(ref, { onboardingComplete: true }, { merge: true })
+    profile.value = { ...profile.value, onboardingComplete: true }
+  }
+
   return {
     user,
     profile,
@@ -126,6 +154,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     dailyCalorieGoal,
     weightUnit,
+    onboardingComplete,
     startAuthListener,
     signUp,
     logIn,
@@ -134,5 +163,7 @@ export const useAuthStore = defineStore('auth', () => {
     logOut,
     updateDailyCalorieGoal,
     updateWeightUnit,
+    updateBodyProfile,
+    completeOnboarding,
   }
 })

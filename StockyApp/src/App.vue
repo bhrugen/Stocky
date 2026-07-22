@@ -9,5 +9,5 @@ const route = useRoute()
 
 <template>
   <RouterView />
-  <BottomNav v-if="authStore.isAuthenticated && !route.meta.public" />
+  <BottomNav v-if="authStore.isAuthenticated && !route.meta.public && !route.meta.onboarding" />
 </template>

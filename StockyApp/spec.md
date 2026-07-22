@@ -21,6 +21,13 @@ Out of scope for v1: macro tracking (protein/carbs/fat), exercise logging, barco
 users/{uid}
   email: string
   dailyCalorieGoal: number
+  weightUnit: "lb" | "kg"
+  onboardingComplete: boolean
+  gender: "male" | "female" | "other" | null
+  age: number | null
+  heightCm: number | null
+  activityLevel: "sedentary" | "light" | "moderate" | "active" | "very_active" | null
+  weeklyRateLb: number        // negative = lose, positive = gain, 0 = maintain; last value used to compute dailyCalorieGoal
   createdAt: timestamp
 
 users/{uid}/foodItems/{itemId}
@@ -49,6 +56,7 @@ users/{uid}/weightEntries/{entryId}
 Notes:
 - `logEntries` are flat documents with a `date` field (queried via `where("date", "==", ...)`) rather than nested subcollections per day — simpler to query ranges for history.
 - Food item name/calories are **snapshotted** into the log entry at the time it's logged, so later edits to a food item do not retroactively change past logged days.
+- `dailyCalorieGoal` is computed at onboarding (and whenever recalculated in Settings) from `gender`/`age`/`heightCm`/current weight/`activityLevel`/`weeklyRateLb` via the Mifflin-St Jeor BMR formula (see §4.1a); it can also be overridden directly with a manual number in Settings, which does not change the stored body-stat fields.
 
 ## 4. User Flows
 
@@ -58,6 +66,14 @@ Notes:
 - Forgot password (Firebase password reset email).
 - Log out.
 - Unauthenticated users are redirected to the login screen for any app route.
+
+### 4.1a Onboarding
+- Triggered once per user: immediately after first sign-up/login, if `onboardingComplete` is false, the router redirects to a dedicated `/onboarding` screen instead of Today (and blocks every other route until it's finished).
+- Collects: gender (male/female/other), age, height (ft/in if weight unit is lb, cm if kg), current weight (in the user's weight unit), activity level (sedentary/light/moderate/active/very active).
+- A "goal pace" slider from -2 to +2 lb/week in 0.5 steps (negative = lose, positive = gain, 0 = maintain) live-updates a preview of the resulting daily calorie target as the user drags it, alongside the estimated maintenance (TDEE) calories.
+- Calculation: BMR via Mifflin-St Jeor (`10×weightKg + 6.25×heightCm − 5×age + 5` for male, `−161` for female, `−78` for other) × an activity multiplier (1.2–1.9), then `+ weeklyRateLb × 500 cal/day` (≈3500 cal/lb spread over 7 days), floored at 1200 cal/day as a safety minimum.
+- Submitting saves all fields plus the computed `dailyCalorieGoal` to the user profile, sets `onboardingComplete: true`, logs the entered current weight as today's first `weightEntries` doc, and redirects to Today.
+- The same body-stat inputs + slider can be revisited later from Settings ("Recalculate from my body stats") to update the goal as weight/activity/goals change.
 
 ### 4.2 Today View (home)
 - Header shows current date (defaults to today; can navigate to other days via History).
@@ -124,17 +140,26 @@ src/
     auth.js
     foodItems.js
     log.js
+    weight.js
   firebase/
     index.js              # Firebase app init (auth + firestore)
   composables/
-    useAuth.js
     useFoodSearch.js
+    useDailyTotals.js
+    useCalorieGoal.js       # BMR/TDEE/goal math wired to reactive body-stat inputs
+  utils/
+    date.js
+    units.js                # lb/kg, cm/ft-in conversions
+    calories.js              # BMR/TDEE/goal formulas, activity level table
   components/
     common/                # generic, app-agnostic reusable UI
       BaseButton.vue
       BaseInput.vue
+      BaseModal.vue
       ProgressRing.vue
       LoadingSpinner.vue
+      RangeSlider.vue
+      BottomNav.vue
     food/                   # food-domain reusable pieces
       FoodItemCard.vue
       FoodSearchList.vue
@@ -143,11 +168,15 @@ src/
       MealSection.vue
       LogEntryRow.vue
       DailySummary.vue
+      DayLog.vue             # shared by Today view and History's day-detail view
     weight/
       WeightEntryForm.vue
       WeightHistoryList.vue
+    goal/
+      CalorieGoalForm.vue    # shared by Onboarding and Settings' "recalculate goal"
   views/                    # one per route, composed from components/
     LoginView.vue
+    OnboardingView.vue
     TodayView.vue
     HistoryView.vue
     FoodLibraryView.vue

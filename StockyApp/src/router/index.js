@@ -11,6 +11,12 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: '/onboarding',
+      name: 'onboarding',
+      component: () => import('@/views/OnboardingView.vue'),
+      meta: { onboarding: true },
+    },
+    {
       path: '/',
       name: 'today',
       component: () => import('@/views/TodayView.vue'),
@@ -46,6 +52,19 @@ router.beforeEach((to) => {
   }
 
   if (to.meta.public && authStore.isAuthenticated) {
+    return { name: 'today' }
+  }
+
+  if (
+    authStore.isAuthenticated &&
+    !authStore.onboardingComplete &&
+    !to.meta.public &&
+    !to.meta.onboarding
+  ) {
+    return { name: 'onboarding' }
+  }
+
+  if (authStore.isAuthenticated && authStore.onboardingComplete && to.meta.onboarding) {
     return { name: 'today' }
   }
 
