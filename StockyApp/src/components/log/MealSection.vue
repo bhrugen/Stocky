@@ -19,7 +19,7 @@ const logStore = useLogStore()
 const entries = logStore.entriesForMeal(props.date, props.mealType)
 
 const title = computed(() => props.mealType.charAt(0).toUpperCase() + props.mealType.slice(1))
-const subtotal = computed(() => entries.value.reduce((sum, entry) => sum + entry.calories, 0))
+const subtotal = computed(() => entries.value.reduce((sum, entry) => sum + (entry.calories ?? 0), 0))
 
 function updateQuantity(entryId, quantity, caloriesPerServing) {
   logStore.updateLogEntryQuantity(entryId, quantity, caloriesPerServing)
