@@ -78,5 +78,6 @@ defineEmits(['click'])
 .base-button--ghost {
   background: transparent;
   color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
 }
 </style>
