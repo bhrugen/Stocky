@@ -8,10 +8,12 @@ import WeightEntryForm from '@/components/weight/WeightEntryForm.vue'
 import WeightHistoryList from '@/components/weight/WeightHistoryList.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useWeightStore } from '@/stores/weight'
+import { useThemeStore } from '@/stores/theme'
 import { lbToKg } from '@/utils/units'
 
 const authStore = useAuthStore()
 const weightStore = useWeightStore()
+const themeStore = useThemeStore()
 const router = useRouter()
 
 const goal = ref(authStore.dailyCalorieGoal)
@@ -135,6 +137,28 @@ function deleteWeightEntry(entryId) {
     </section>
 
     <section class="settings-view__section">
+      <p class="settings-view__label">Appearance</p>
+      <div class="settings-view__unit-toggle">
+        <button
+          type="button"
+          class="settings-view__unit-option"
+          :class="{ 'settings-view__unit-option--active': themeStore.theme === 'light' }"
+          @click="themeStore.setTheme('light')"
+        >
+          Light
+        </button>
+        <button
+          type="button"
+          class="settings-view__unit-option"
+          :class="{ 'settings-view__unit-option--active': themeStore.theme === 'dark' }"
+          @click="themeStore.setTheme('dark')"
+        >
+          Dark
+        </button>
+      </div>
+    </section>
+
+    <section class="settings-view__section">
       <p class="settings-view__label">Weight unit</p>
       <div class="settings-view__unit-toggle">
         <button
@@ -162,7 +186,27 @@ function deleteWeightEntry(entryId) {
       <WeightHistoryList :entries="weightStore.sortedEntries" @delete="deleteWeightEntry" />
     </section>
 
-    <BaseButton variant="ghost" full-width @click="handleLogOut">Log out</BaseButton>
+    <section class="settings-view__section settings-view__section--logout">
+      <button type="button" class="settings-view__logout" @click="handleLogOut">
+        <svg
+          class="settings-view__logout-icon"
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          aria-hidden="true"
+        >
+          <path
+            d="M15 17l5-5-5-5M20 12H9M12 19H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <span>Log out</span>
+      </button>
+    </section>
   </div>
 </template>
 
@@ -239,5 +283,35 @@ function deleteWeightEntry(entryId) {
   background: var(--color-primary);
   color: #fff;
   border-color: var(--color-primary);
+}
+
+.settings-view__section--logout {
+  padding: 0;
+  margin-top: var(--space-sm);
+  overflow: hidden;
+}
+
+.settings-view__logout {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-md);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-danger);
+  transition: background-color 0.15s;
+}
+
+.settings-view__logout:hover,
+.settings-view__logout:focus-visible {
+  background: var(--color-danger-soft);
+}
+
+.settings-view__logout-icon {
+  flex-shrink: 0;
 }
 </style>
