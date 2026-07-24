@@ -163,7 +163,7 @@ function deleteWeightEntry(entryId) {
     </section>
 
     <BaseButton variant="ghost" full-width @click="handleLogOut">Log out</BaseButton>
-
+  </div>
 </template>
 
 <style scoped>
