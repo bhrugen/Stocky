@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "format": "prettier --write --experimental-cli src/",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "firebase": "^12.16.0",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@pinia/testing": "^2.0.1",
+    "@playwright/test": "^1.61.1",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vue/test-utils": "^2.4.11",
     "jsdom": "^29.1.1",

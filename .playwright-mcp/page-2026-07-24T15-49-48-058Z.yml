@@ -1,0 +1,47 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e30]:
+    - banner [ref=e31]:
+      - heading "Let's set your goal" [level=1] [ref=e32]
+      - paragraph [ref=e33]: Tell us about yourself so we can calculate a daily calorie target.
+    - generic [ref=e34]:
+      - generic [ref=e35]:
+        - generic [ref=e36]: Gender
+        - combobox "Gender" [ref=e37]:
+          - option "Select…" [disabled] [selected]
+          - option "Male"
+          - option "Female"
+          - option "Other"
+      - generic [ref=e38]:
+        - generic [ref=e39]: Age
+        - spinbutton "Age" [ref=e40]
+      - generic [ref=e41]:
+        - generic [ref=e42]:
+          - generic [ref=e43]: Height (ft)
+          - spinbutton "Height (ft)" [ref=e44]
+        - generic [ref=e45]:
+          - generic [ref=e46]: Height (in)
+          - spinbutton "Height (in)" [ref=e47]
+      - generic [ref=e48]:
+        - generic [ref=e49]: Current weight (lb)
+        - spinbutton "Current weight (lb)" [ref=e50]
+      - generic [ref=e51]:
+        - generic [ref=e52]: Activity level
+        - combobox "Activity level" [ref=e53]:
+          - option "Select…" [disabled] [selected]
+          - option "Sedentary (little or no exercise)"
+          - option "Light (exercise 1-3 days/week)"
+          - option "Moderate (exercise 3-5 days/week)"
+          - option "Active (exercise 6-7 days/week)"
+          - option "Very active (hard exercise daily)"
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - generic [ref=e56]: Goal pace
+          - generic [ref=e57]: Maintain weight
+        - slider [ref=e58]: "0"
+        - generic [ref=e59]:
+          - generic [ref=e60]: Lose 2 lb/week
+          - generic [ref=e61]: Gain 2 lb/week
+      - button "Get started" [disabled] [ref=e62]
+  - generic [ref=e3]:
+    - generic "Toggle devtools panel" [ref=e4] [cursor=pointer]
+    - generic "Toggle Component Inspector" [ref=e25] [cursor=pointer]
