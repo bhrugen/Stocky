@@ -80,7 +80,8 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     error.value = null
     try {
-      await signInWithEmailAndPassword(auth, email, password)
+      const cred = await signInWithEmailAndPassword(auth, email, password)
+      await ensureProfile(cred.user)
     } catch (err) {
       error.value = err.message
       throw err

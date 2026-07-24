@@ -100,8 +100,9 @@ describe('useAuthStore', () => {
     expect(store.loading).toBe(false)
   })
 
-  it('logIn calls signInWithEmailAndPassword and toggles loading', async () => {
-    signInWithEmailAndPassword.mockResolvedValue({})
+  it('logIn calls signInWithEmailAndPassword, loads the profile, and toggles loading', async () => {
+    signInWithEmailAndPassword.mockResolvedValue({ user: { uid: 'u1', email: 'a@b.com' } })
+    getDoc.mockResolvedValue({ exists: () => true, data: () => ({ onboardingComplete: true }) })
     const store = useAuthStore()
 
     const promise = store.logIn('a@b.com', 'password123')
@@ -110,6 +111,7 @@ describe('useAuthStore', () => {
 
     expect(signInWithEmailAndPassword).toHaveBeenCalledWith({}, 'a@b.com', 'password123')
     expect(store.loading).toBe(false)
+    expect(store.profile).toMatchObject({ onboardingComplete: true })
   })
 
   it('logInWithGoogle provisions a profile on first sign-in', async () => {
